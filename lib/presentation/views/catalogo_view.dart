@@ -138,7 +138,7 @@ class _CatalogoViewState extends State<CatalogoView> {
                   ),
                   SliverToBoxAdapter(child: _buildCartSummary(context)),
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
                     sliver: _ProductResults(
                       key: ValueKey(
                         '${_listView}_${productos.length}_$_search',
@@ -170,7 +170,7 @@ class _CatalogoViewState extends State<CatalogoView> {
         children: [
           Expanded(
             child: DropdownButtonFormField<_SortOption>(
-              value: _sort,
+              initialValue: _sort,
               decoration: const InputDecoration(
                 labelText: 'Ordenar por',
                 border: OutlineInputBorder(),
@@ -287,7 +287,8 @@ class _CatalogoViewState extends State<CatalogoView> {
         ),
       ),
     );
-    if (result != null) setState(() => _maxPrice = result);
+    if (!mounted || result == null) return;
+    setState(() => _maxPrice = result);
   }
 
   void _agregarProducto(BuildContext context, Producto producto) {

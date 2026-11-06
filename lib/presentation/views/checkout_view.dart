@@ -31,26 +31,17 @@ class _CheckoutViewState extends State<CheckoutView> {
   // cascada de todos los TextFormField del árbol sin usar controladores manuales.
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // Expresiones regulares (RegExp) para blindar la captura de datos:
-  // 1. Nombre completo: solo letras (incluyendo acentos/ñ) y espacios, mín. 3 caracteres.
+  // Expresiones regulares (RegExp) para blindar la captura de datos.
   static final RegExp _nombreRegExp = RegExp(
     r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]{3,60}$',
   );
-
-  // 2. Correo electrónico: estructura estándar usuario@dominio.extension
   static final RegExp _correoRegExp = RegExp(
     r'^[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}$',
   );
-
-  // 3. Teléfono de contacto: exactamente 10 dígitos numéricos.
   static final RegExp _telefonoRegExp = RegExp(r'^\d{10}$');
-
-  // 4. Dirección de entrega: calle, número y referencia (mín. 5 caracteres).
   static final RegExp _direccionRegExp = RegExp(
     r'^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s#,\.-]{5,120}$',
   );
-
-  // 5. Tarjeta de pago: 16 dígitos numéricos (permite espacios cada 4 dígitos).
   static final RegExp _tarjetaRegExp = RegExp(r'^(\d{4}\s?){3}\d{4}$');
 
   CatalogoController get controller => widget.controller;
@@ -60,7 +51,6 @@ class _CheckoutViewState extends State<CheckoutView> {
     if (formState == null) return;
 
     // Dispara las validaciones en cascada de todos los TextFormField.
-    // Si algún campo no cumple su RegExp, pinta los avisos visuales en rojo.
     if (!formState.validate()) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -466,58 +456,65 @@ class _ResumenCarritoSection extends StatelessWidget {
               ...items.map(
                 (item) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.producto.nombre,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.producto.nombre,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  '${item.cantidad} x \$${item.producto.precio.toStringAsFixed(2)} (Stock disp: ${item.producto.stock})',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '\$${item.subtotal.toStringAsFixed(2)}',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton.outlined(
+                            visualDensity: VisualDensity.compact,
+                            tooltip: 'Quitar 1 unidad',
+                            onPressed: () => onDecrementar(item),
+                            icon: const Icon(Icons.remove, size: 18),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              '${item.cantidad}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Text(
-                              '${item.cantidad} x \$${item.producto.precio.toStringAsFixed(2)} (Stock disp: ${item.producto.stock})',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton.outlined(
-                        visualDensity: VisualDensity.compact,
-                        tooltip: 'Quitar 1 unidad',
-                        onPressed: () => onDecrementar(item),
-                        icon: const Icon(Icons.remove, size: 18),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          '${item.cantidad}',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                      ),
-                      IconButton.outlined(
-                        visualDensity: VisualDensity.compact,
-                        tooltip: 'Agregar 1 unidad',
-                        onPressed: () => onIncrementar(item),
-                        icon: const Icon(Icons.add, size: 18),
-                      ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 76,
-                        child: Text(
-                          '\$${item.subtotal.toStringAsFixed(2)}',
-                          textAlign: TextAlign.right,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
+                          IconButton.outlined(
+                            visualDensity: VisualDensity.compact,
+                            tooltip: 'Agregar 1 unidad',
+                            onPressed: () => onIncrementar(item),
+                            icon: const Icon(Icons.add, size: 18),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),

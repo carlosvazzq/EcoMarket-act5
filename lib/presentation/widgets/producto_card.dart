@@ -44,78 +44,117 @@ class _ProductoCardState extends State<ProductoCard> {
       ),
     );
 
-    final details = Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (badge != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiaryContainer,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                badge,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+    final imageWithBadge = Stack(
+      fit: StackFit.expand,
+      children: [
+        image,
+        if (badge != null)
+          Positioned(
+            top: 8,
+            left: 8,
+            right: 8,
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  badge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          const SizedBox(height: 6),
+          ),
+      ],
+    );
+
+    final details = Padding(
+      padding: const EdgeInsets.fromLTRB(8, 2, 8, 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
             producto.nombre,
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            producto.categoria,
-            style: TextStyle(color: theme.colorScheme.primary),
-          ),
-          const Spacer(),
-          Text(
-            '\$${producto.precio.toStringAsFixed(2)}',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            producto.disponible ? 'Stock: ${producto.stock}' : 'Agotado',
-            style: TextStyle(
-              color: producto.disponible
-                  ? theme.colorScheme.onSurfaceVariant
-                  : theme.colorScheme.error,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonal(
-              onPressed: producto.disponible
-                  ? () {
-                      setState(() => _showAdded = true);
-                      widget.onAgregar();
-                      Future<void>.delayed(
-                        const Duration(milliseconds: 500),
-                        () {
-                          if (mounted) setState(() => _showAdded = false);
-                        },
-                      );
-                    }
-                  : null,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: _showAdded
-                    ? const Icon(Icons.check, key: ValueKey('added'))
-                    : const Text('Agregar', key: ValueKey('add')),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  producto.categoria,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: theme.colorScheme.primary),
+                ),
               ),
-            ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  producto.disponible ? 'Stock: ${producto.stock}' : 'Agotado',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    color: producto.disponible
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '\$${producto.precio.toStringAsFixed(2)}',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                height: 30,
+                child: FilledButton.tonal(
+                  onPressed: producto.disponible
+                      ? () {
+                          setState(() => _showAdded = true);
+                          widget.onAgregar();
+                          Future<void>.delayed(
+                            const Duration(milliseconds: 500),
+                            () {
+                              if (mounted) setState(() => _showAdded = false);
+                            },
+                          );
+                        }
+                      : null,
+                  style: FilledButton.styleFrom(
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: _showAdded
+                        ? const Icon(Icons.check, key: ValueKey('added'))
+                        : const Text('Agregar', key: ValueKey('add')),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -131,7 +170,11 @@ class _ProductoCardState extends State<ProductoCard> {
                 height: 190,
                 child: Row(
                   children: [
-                    SizedBox(width: 150, height: double.infinity, child: image),
+                    SizedBox(
+                      width: 150,
+                      height: double.infinity,
+                      child: imageWithBadge,
+                    ),
                     Expanded(child: details),
                   ],
                 ),
@@ -140,16 +183,16 @@ class _ProductoCardState extends State<ProductoCard> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
-                    flex: 4,
+                    flex: 5,
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        image,
+                        imageWithBadge,
                         if (!producto.disponible) const _StockOverlay(),
                       ],
                     ),
                   ),
-                  Expanded(flex: 5, child: details),
+                  Expanded(flex: 4, child: details),
                 ],
               ),
       ),
