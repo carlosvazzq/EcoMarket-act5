@@ -1,4 +1,3 @@
-
 // CATALOGO CONTROLLER  (Rol 1 - Arquitectura y Datos)
 
 // Es el "cerebro" de la app. Guarda en memoria RAM:
@@ -18,13 +17,19 @@
 
 import 'package:flutter/foundation.dart';
 
+import '../../data/services/ecomarket_service.dart';
 import '../../domain/entities/item_carrito.dart';
+import '../../domain/entities/estado_entrega.dart';
 import '../../domain/entities/producto.dart';
 
 class CatalogoController extends ChangeNotifier {
   // Recibe los productos iniciales. Si no le mandas nada, arranca vacío.
-  CatalogoController({List<Producto> productosIniciales = const []})
-      : _productos = List.of(productosIniciales);
+  CatalogoController({
+    required this.service,
+    List<Producto> productosIniciales = const [],
+  }) : _productos = List.of(productosIniciales);
+
+  final EcoMarketService service;
 
   // Lista de productos en RAM (privada, solo este controller la modifica).
   List<Producto> _productos;
@@ -54,8 +59,9 @@ class CatalogoController extends ChangeNotifier {
   // Si tocas la misma categoría otra vez, se quita el filtro.
   // ROL 2: en el onSelected del Chip pon -> controller.categoriaSeleccionada = cat;
   set categoriaSeleccionada(String? categoria) {
-    _categoriaSeleccionada =
-        categoria == _categoriaSeleccionada ? null : categoria;
+    _categoriaSeleccionada = categoria == _categoriaSeleccionada
+        ? null
+        : categoria;
     notifyListeners();
   }
 
@@ -91,6 +97,16 @@ class CatalogoController extends ChangeNotifier {
     _carrito.clear();
     notifyListeners();
   }
+
+  Future<List<Producto>> cargarCatalogo({bool simularError = false}) async {
+    final productos = await service.obtenerCatalogo(simularError: simularError);
+    _productos = List.of(productos);
+    _carrito.clear();
+    notifyListeners();
+    return productos;
+  }
+
+  Stream<EstadoEntrega> seguirPedido() => service.seguirRepartidor();
 
   // Agrega 1 unidad al carrito.
   // Regresa true si se pudo, false si ya no hay stock suficiente.
@@ -150,8 +166,9 @@ class CatalogoController extends ChangeNotifier {
   // ROL 2: llámalo desde el onPressed del FloatingActionButton "Rellenar stock".
   void rellenarStock({int unidades = 10}) {
     assert(unidades > 0, 'Las unidades a reabastecer deben ser positivas');
-    _productos =
-        _productos.map((p) => p.copyWith(stock: p.stock + unidades)).toList();
+    _productos = _productos
+        .map((p) => p.copyWith(stock: p.stock + unidades))
+        .toList();
     notifyListeners();
   }
 

@@ -1,4 +1,3 @@
-
 // MAIN  (punto de entrada de la app)
 // -----------------------------------------------------------------------------
 // Aquí solo se arranca la app y se configura el tema. Nada de lógica.
@@ -10,7 +9,7 @@
 // ROL 2: cambia el "home" de abajo por tu CatalogoView(controller: controller)
 import 'package:flutter/material.dart';
 
-import 'data/datasources/productos_mock.dart';
+import 'data/services/ecomarket_service.dart';
 import 'presentation/controllers/catalogo_controller.dart';
 import 'presentation/views/catalogo_view.dart';
 
@@ -26,8 +25,9 @@ class EcoMarketApp extends StatefulWidget {
 }
 
 class _EcoMarketAppState extends State<EcoMarketApp> {
-  late final CatalogoController _controller =
-      CatalogoController(productosIniciales: productosMock);
+  late final CatalogoController _controller = CatalogoController(
+    service: EcoMarketService(),
+  );
 
   @override
   Widget build(BuildContext context) {

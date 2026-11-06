@@ -22,8 +22,15 @@ class _CatalogoViewState extends State<CatalogoView> {
   double _maxPrice = 300;
   _SortOption _sort = _SortOption.availability;
   bool _listView = false;
+  late final Future<List<Producto>> _catalogoFuture;
 
   CatalogoController get controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _catalogoFuture = controller.cargarCatalogo();
+  }
 
   @override
   void dispose() {
@@ -33,99 +40,124 @@ class _CatalogoViewState extends State<CatalogoView> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, child) {
-        final productos = _filteredProducts();
-        return Scaffold(
-          body: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                pinned: true,
-                expandedHeight: 164,
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: const Text('EcoMarket App'),
-                  background: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 54, 20, 54),
-                      child: Text(
-                        'Hola, eco-comprador 🌱\nProductos sustentables para ti',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontSize: 14,
+    return FutureBuilder<List<Producto>>(
+      future: _catalogoFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('EcoMarket App')),
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('EcoMarket App')),
+            body: Center(
+              child: Text('Error al cargar el catálogo: ${snapshot.error}'),
+            ),
+          );
+        }
+
+        return ListenableBuilder(
+          listenable: controller,
+          builder: (context, child) {
+            final productos = _filteredProducts();
+            return Scaffold(
+              body: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    pinned: true,
+                    expandedHeight: 164,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: const Text('EcoMarket App'),
+                      background: SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 54, 20, 54),
+                          child: Text(
+                            'Hola, eco-comprador 🌱\nProductos sustentables para ti',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(54),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: SearchBar(
-                      controller: _searchController,
-                      hintText: 'Buscar productos...',
-                      leading: const Icon(Icons.search),
-                      trailing: [
-                        if (_search.isNotEmpty)
-                          IconButton(
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _search = '');
-                            },
-                            icon: const Icon(Icons.clear),
-                          ),
-                      ],
-                      onChanged: (value) => setState(() => _search = value),
-                    ),
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    tooltip: 'Abrir carrito',
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => CheckoutView(controller: controller),
+                    bottom: PreferredSize(
+                      preferredSize: const Size.fromHeight(54),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                        child: SearchBar(
+                          controller: _searchController,
+                          hintText: 'Buscar productos...',
+                          leading: const Icon(Icons.search),
+                          trailing: [
+                            if (_search.isNotEmpty)
+                              IconButton(
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _search = '');
+                                },
+                                icon: const Icon(Icons.clear),
+                              ),
+                          ],
+                          onChanged: (value) => setState(() => _search = value),
+                        ),
                       ),
                     ),
-                    icon: Badge(
-                      label: Text('${controller.cantidadItems}'),
-                      isLabelVisible: controller.cantidadItems > 0,
-                      child: const Icon(Icons.shopping_bag_outlined),
+                    actions: [
+                      IconButton(
+                        tooltip: 'Abrir carrito',
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                CheckoutView(controller: controller),
+                          ),
+                        ),
+                        icon: Badge(
+                          label: Text('${controller.cantidadItems}'),
+                          isLabelVisible: controller.cantidadItems > 0,
+                          child: const Icon(Icons.shopping_bag_outlined),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                  SliverToBoxAdapter(child: _buildControls(context)),
+                  SliverToBoxAdapter(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _CategoryFilters(
+                        key: ValueKey(controller.categoriaSeleccionada),
+                        controller: controller,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SliverToBoxAdapter(child: _buildCartSummary(context)),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                    sliver: _ProductResults(
+                      key: ValueKey(
+                        '${_listView}_${productos.length}_$_search',
+                      ),
+                      productos: productos,
+                      listView: _listView,
+                      onAgregar: (producto) =>
+                          _agregarProducto(context, producto),
+                    ),
+                  ),
                 ],
               ),
-              SliverToBoxAdapter(child: _buildControls(context)),
-              SliverToBoxAdapter(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _CategoryFilters(
-                    key: ValueKey(controller.categoriaSeleccionada),
-                    controller: controller,
-                  ),
-                ),
+              floatingActionButton: FloatingActionButton.extended(
+                onPressed: controller.rellenarStock,
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('Rellenar stock'),
               ),
-              SliverToBoxAdapter(child: _buildCartSummary(context)),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-                sliver: _ProductResults(
-                  key: ValueKey('${_listView}_${productos.length}_$_search'),
-                  productos: productos,
-                  listView: _listView,
-                  onAgregar: (producto) => _agregarProducto(context, producto),
-                ),
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: controller.rellenarStock,
-            icon: const Icon(Icons.inventory_2_outlined),
-            label: const Text('Rellenar stock'),
-          ),
+            );
+          },
         );
       },
     );
@@ -203,7 +235,8 @@ class _CatalogoViewState extends State<CatalogoView> {
   List<Producto> _filteredProducts() {
     final normalizedSearch = _search.trim().toLowerCase();
     final products = controller.productosFiltrados.where((producto) {
-      final matchesSearch = normalizedSearch.isEmpty ||
+      final matchesSearch =
+          normalizedSearch.isEmpty ||
           producto.nombre.toLowerCase().contains(normalizedSearch) ||
           producto.categoria.toLowerCase().contains(normalizedSearch);
       return matchesSearch && producto.precio <= _maxPrice;

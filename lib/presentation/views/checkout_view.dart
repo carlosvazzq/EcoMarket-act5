@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/item_carrito.dart';
 import '../controllers/catalogo_controller.dart';
+import 'seguimiento_view.dart';
 
 class CheckoutView extends StatefulWidget {
   const CheckoutView({required this.controller, super.key});
@@ -50,9 +51,7 @@ class _CheckoutViewState extends State<CheckoutView> {
   );
 
   // 5. Tarjeta de pago: 16 dígitos numéricos (permite espacios cada 4 dígitos).
-  static final RegExp _tarjetaRegExp = RegExp(
-    r'^(\d{4}\s?){3}\d{4}$',
-  );
+  static final RegExp _tarjetaRegExp = RegExp(r'^(\d{4}\s?){3}\d{4}$');
 
   CatalogoController get controller => widget.controller;
 
@@ -125,15 +124,19 @@ class _CheckoutViewState extends State<CheckoutView> {
           ),
         ),
       );
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SeguimientoView(controller: controller),
+      ),
+    );
   }
 
   void _incrementarProducto(BuildContext context, ItemCarrito item) {
     if (controller.agregarAlCarrito(item.producto)) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Sin stock suficiente')),
-      );
+      ..showSnackBar(const SnackBar(content: Text('Sin stock suficiente')));
   }
 
   InputDecoration _buildInputDecoration({
@@ -149,9 +152,7 @@ class _CheckoutViewState extends State<CheckoutView> {
       prefixIcon: Icon(icon),
       filled: true,
       fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: colorScheme.outlineVariant),
@@ -414,10 +415,7 @@ class _ResumenCarritoSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.shopping_bag_outlined,
-                  color: colorScheme.primary,
-                ),
+                Icon(Icons.shopping_bag_outlined, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -551,4 +549,3 @@ class _ResumenCarritoSection extends StatelessWidget {
     );
   }
 }
-
