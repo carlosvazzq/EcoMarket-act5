@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../data/services/notificaciones_service.dart';
 import '../../domain/entities/item_carrito.dart';
 import '../controllers/catalogo_controller.dart';
 import 'seguimiento_view.dart';
@@ -30,6 +31,7 @@ class _CheckoutViewState extends State<CheckoutView> {
   // GlobalKey de alta jerarquía para coordinar y disparar la validación en
   // cascada de todos los TextFormField del árbol sin usar controladores manuales.
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final NotificacionesService _notificaciones = NotificacionesService();
 
   // Expresiones regulares (RegExp) para blindar la captura de datos.
   static final RegExp _nombreRegExp = RegExp(
@@ -46,7 +48,13 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   CatalogoController get controller => widget.controller;
 
-  void _procesarPago(BuildContext context) {
+  @override
+  void initState() {
+    super.initState();
+    _notificaciones.inicializar();
+  }
+
+  Future<void> _procesarPago(BuildContext context) async {
     final formState = _formKey.currentState;
     if (formState == null) return;
 
@@ -74,6 +82,9 @@ class _CheckoutViewState extends State<CheckoutView> {
       return;
     }
 
+    // Conserva el total antes de vaciar el carrito al confirmar el pago.
+    final totalPagado = controller.total;
+
     // Ejecuta la mutación de stock en RAM y vacía el carrito reactivamente.
     final pagoExitoso = controller.confirmarPago();
 
@@ -94,6 +105,8 @@ class _CheckoutViewState extends State<CheckoutView> {
 
     formState.reset();
     FocusScope.of(context).unfocus();
+    await _notificaciones.mostrarNotificacionCompra(totalPagado);
+    if (!context.mounted) return;
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()

@@ -8,12 +8,35 @@
 //
 // ROL 2: cambia el "home" de abajo por tu CatalogoView(controller: controller)
 import 'package:flutter/material.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'data/services/ecomarket_service.dart';
 import 'presentation/controllers/catalogo_controller.dart';
 import 'presentation/views/catalogo_view.dart';
 
-void main() {
+const String _tareaSincronizacionInventario =
+    'sincronizacion_silenciosa_inventario';
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((taskName, inputData) async {
+    if (taskName == _tareaSincronizacionInventario) {
+      debugPrint('Sincronización silenciosa de inventario completada.');
+    }
+    return true;
+  });
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Workmanager().initialize(callbackDispatcher);
+  await Workmanager().registerPeriodicTask(
+    'ecomarket-inventario-periodico',
+    _tareaSincronizacionInventario,
+    frequency: const Duration(minutes: 15),
+    constraints: Constraints(networkType: NetworkType.connected),
+  );
+
   runApp(const EcoMarketApp());
 }
 
